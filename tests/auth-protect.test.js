@@ -1,12 +1,13 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
+const { setTimeout: wait } = require('timers/promises');
 const { app, server } = require('../server');
 const userModel = require('../models/userModel');
 
 describe('Auth protection', () => {
   beforeAll(async () => {
     // ensure DB connection established by server
-    await new Promise((res) => setTimeout(res, 500));
+    await wait(500);
   });
 
   afterAll(async () => {
@@ -22,7 +23,7 @@ describe('Auth protection', () => {
   });
 
   test('admin can access protected route after promotion', async () => {
-    const email = 'smoke-protect+' + Date.now() + '@example.com';
+    const email = `smoke-protect+${  Date.now()  }@example.com`;
     // signup
     const signup = await request(app).post('/api/v1/auth/signup').send({
       name: 'Protect User',
@@ -36,7 +37,7 @@ describe('Auth protection', () => {
     // login to get token
     const login = await request(app).post('/api/v1/auth/login').send({ email, password: 'passw0rd1' });
     expect(login.status).toBe(200);
-    const token = login.body.token;
+    const {token} = login.body;
     // call protected endpoint
     const res = await request(app).post('/api/v1/brands').set('Authorization', `Bearer ${token}`).send({ name: 'Admin Brand' });
     expect([200,201,204]).toContain(res.status);

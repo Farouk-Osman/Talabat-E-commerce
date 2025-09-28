@@ -1,12 +1,13 @@
 const request = require('supertest');
 const path = require('path');
+const fs = require('fs');
 const { app, server } = require('../server');
 const userModel = require('../models/userModel');
 
 let adminToken;
 
 const fixtures = path.join(__dirname, '__fixtures__');
-const fs = require('fs');
+
 const base64 = fs.readFileSync(path.join(fixtures, 'tiny.png'), 'utf8');
 const tinyBuffer = Buffer.from(base64, 'base64');
 
