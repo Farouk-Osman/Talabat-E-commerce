@@ -1,250 +1,100 @@
-# NodeJS Talabat API v1
-
-A RESTful API built with Node.js to interact with Talabat’s integration infrastructure (orders, menus, vendor management).  
-This project serves as a bridge between a local POS or vendor platform and Talabat’s backend, enabling programmatic management of orders, catalog, store status, etc.
-
----
-
-## Table of Contents
-
-- [Features](#features)  
-- [Architecture & Structure](#architecture--structure)  
-- [Prerequisites](#prerequisites)  
-- [Installation & Setup](#installation--setup)  
-- [Configuration](#configuration)  
-- [Usage / Endpoints](#usage--endpoints)  
-- [Middleware & Utilities](#middleware--utilities)  
-- [Error Handling & Logging](#error-handling--logging)  
-- [Security Considerations](#security-considerations)  
-- [Testing](#testing)  
-- [Contribution](#contribution)  
-- [License](#license)  
-- [Acknowledgements / References](#acknowledgements--references)
+# Course Material and FAQ for my NodeJS - Build a Full E-Commerce RESTful APIs (بالعربي) 
 
----
+This repo contains every course section in a single branch  and the finished project files for all the projects contained in the master branch
 
-## Features
+Choose the section branch that you study, and **final code to compare it with your own code whenever something doesn't work**!
 
-- Vendor authentication & access token issuance  
-- CRUD operations for menus / catalog  
-- Webhooks support (e.g. incoming orders, order status updates)  
-- Order management: accept, reject, update status  
-- Vendor availability toggling  
-- Data validation via middlewares  
-- Utility helpers (e.g. date handling, request formatting)  
-- Error-handling middleware  
-- Logging support  
-- Modular folder structure (routes, services, models, middlewares, utils, config)  
+## Join To Discord Channel For Updates [discord](https://discord.gg/e2nwBNU2q9) 
 
----
 
-## Architecture & Structure
+👇 **_Please read the following Frequently Asked Questions (FAQ) carefully before starting the course_** 👇
 
-Here is a high-level view of how the project is organized:
+## FAQ
 
-```
-.
-├── server.js                # Entry point / bootstrap
-├── config/                  # Configuration files (e.g. environment, constants)
-├── routes/                  # Express route definitions
-├── controllers / services   # Business logic handlers
-├── models/                  # Data models / schemas (e.g. for persistence or DTOs)
-├── middlewares/             # Express middlewares (auth, validation, error handling)
-├── utils/                   # Helper utilities (date, formatting, etc.)
-├── .eslintrc, .prettierrc    # Linting / formatting rules
-└── package.json             # Project metadata & dependencies
-```
+### Q1: How do I download the files?
 
-- **server.js**: Boots the Express application, connects necessary middleware, sets routes, and starts the HTTP server.  
-- **routes**: Declares endpoints and associates them with controllers.  
-- **services / controllers**: Encapsulate business logic, isolate route handlers from domain logic.  
-- **models**: Represent data structures (either DB schemas or DTO definitions).  
-- **middlewares**: Reusable logic such as authentication, request validation, error capturing, etc.  
-- **utils**: Common helpers (e.g. formatting dates, constructing responses).  
-- **config**: Stores environment-based settings (API keys, base URLs, timeouts, etc.)
+**A:** If you're new to GitHub and just want to download the entire code, hit the green button saying "Code", and then choose the "Download ZIP" option.
 
-This modular structure ensures concerns are separated, making the codebase easier to maintain, extend, and test.
 
----
+### Q2: I'm stuck in one of the projects. Where do I get help?
 
-## Prerequisites
+**A:** Have you actually tried to fix the problem on your own? Have you compared your code to the final code? If you failed fixing your problem, please **post a detailed description of the problem to the Q&A area of that video over at Udemy**, along with a [codepen](https://codepen.io/pen/) containing your code. You will get help there. Please don't send me a personal message or email to fix coding problems.
 
-Before running this project, ensure you have:
 
-- **Node.js** (recommended version: v14.x, v16.x, or newer)  
-- **npm** (or Yarn)  
-- Access credentials / integration keys from Talabat’s system (if required)  
-- A development environment for local testing (you may use tools like `nodemon`)  
-- HTTPS / SSL support if needed (some endpoints / webhooks may require secure endpoints)  
+### Q3: I want to put the project in my portfolio. Is that allowed?
 
----
+**A:** Absolutely! Just make sure you actually built it yourself by following the course, and that you understand what you did. What is **not allowed** is that you create your own course/videos/articles based on this course's content!
 
-## Installation & Setup
 
-1. Clone the repository:
+### Q4: Do you accept pull requests?
 
-   ```bash
-   git clone https://github.com/Farouk-Osman/NodeJS-Talabat-api-v1.git
-   cd NodeJS-Talabat-api-v1
-   ```
+**A:** No, for the simple reason that I want this repository to contain the _exact_ same code that is shown in the videos. However, please feel free to add an issue if you found one.
 
-2. Install dependencies:
 
-   ```bash
-   npm install
-   ```
+## Course Highlights
 
-3. Create your environment configuration file. You may use `.env` or `config/default.js` (depending on implementation). Example variables:
+1- Project Overview
 
-   ```
-   PORT=3000
-   TALABAT_API_BASE_URL=https://integration.talabat.com
-   CLIENT_ID=your_client_id
-   CLIENT_SECRET=your_secret
-   WEBHOOK_SECRET=your_webhook_secret
-   LOG_LEVEL=info
-   ```
+خلال هذا القسم هيتم استعراض مشروع المتجر الإلكتروني اللي هيتم تنفيذه خلال هذا الكورس ... مهم جدا تتفرج عليه بتركيز عشان تكون عارف ايه المميزات اللي هتتنفذ خلال المشروع ده 
 
-4. Run the project:
+2- How Web Work
 
-   ```bash
-   npm start
-   ```
+خلال القسم ده هنتكلم شويه عن اساسيات النتورك وازاي الويب بيشتغل عشان كله يكون عنده الاساسيات اللي هنبني عليها اللي جاي وفي نفس الوقت نكون عارف احنا مكانا فين بالظبط وايه دورنا واحنا بنكتب كود
 
-   During development, you may prefer:
+3- Preparing Tools And Environment
 
-   ```bash
-   npm run dev
-   ```
+خلال القسم ده هنبدأ نجهز بيئة العمل بتاعتنا والمحرر اللي هنبدأ نشتغل عليه
 
-5. The API should now be listening on `http://localhost:<PORT>` (e.g. `http://localhost:3000`).
+4- Preparing Express Server And Mongodb
 
----
+خلال القسم ده هنبدأ نجهز الاكسبريس اب بتاعنا ونبدأ ننشأ السيرفر ونربط التطبيق بتاعنا بالداتا بيز وكمان هنشرح الستراكشر بتاع الملفات اللي هنشتغل بيه خلال المشروع اللي هننفذه
 
-## Configuration
+5- Categories CRUD Operations
 
-The project expects configuration values to drive behavior. Typical configuration may include:
+خلال القسم ده هنبدأ التنفيذ الفعل لفيتشر الاقسام داخل المتجر الالكتروني الاقسام دي ممكن تكون ملابس او الكترونيات ..إلى آخره.
 
-| Key | Purpose |
-|---|---|
-| `PORT` | HTTP port number |
-| `TALABAT_API_BASE_URL` | Base URL for Talabat’s integration middleware |
-| `CLIENT_ID`, `CLIENT_SECRET` | Credentials for authentication / token issuance |
-| `WEBHOOK_SECRET` | Secret token / HMAC key to validate incoming webhook requests |
-| `LOG_LEVEL` | Logging granularity (e.g. info, debug, warn, error) |
-| `REQUEST_TIMEOUT` | Timeout for outbound HTTP requests |
-| Any other keys for third‑party integrations (if used) |
+6- Advanced Error Handling & Adding Validation Layer
 
-Make sure your `.gitignore` excludes any config files that include secrets.
+من السكاشن المهمة جدا اللي هنشرح فيها ازاي اكسبريس بيتعامل مع الايرورز وهنبدأ نشوف ازاي نمسك الايرورز دي ونتحكم في شكلها والشكل النهائي اللي هيرجع للمستخدم وكمان هنشوف ازاي نمسك باقي الايرورز اللي ممكن تحصل في باقي التطبيق غير اكسبريس
 
----
+7- SubCategories CRUD & Brands CRUD Operations
 
-## Usage / Endpoints
+خلال القسم ده هنبدأ ننفذ الاقسام الفرعية اللي هتكون بتنتمي للاقسام الرئيسية بمعني ان القسم الرئيسي ينتمي ليه قسم او اكثر فرعي .. بالاضافه للعمل علي فيشتر البراندات
 
-Below is a sample list of endpoints you might expect; adapt it to your implementation.
+8- Products CRUD Operations
 
-### Authentication & Token
+خلال القسم ده هنبدأ نشتغل علي فيتشر المنتج وهنشوف ازاي نعمل انشاء وتعديل وحذف للمنتج .. بالاضافة ازاي نعمل بحث وازاي نعمل ترتيب للمنتج سواء بسعره او عدد المبيعات للمنتج او غيره .. ازاي كمان نعمل فلتر للمنتج سواء بالقسم اللي بينتمي ليه واو العلامة التجارية وغيره
 
-- `POST /auth/token` — Exchange client credentials or login payload for an access token  
-- `GET /auth/refresh` — Refresh token (if supported)
+9- Upload Single And Multiple Images And Image Processing
 
-### Vendor / Store
+خلال القسم ده هنشوف ازاي نعمل رفع لصوره واحدة او اكتر من صورة .. وهنشوف ازاي نحسن من العمليات اللي هتم علي الصورة عشان يحسن من الاداء .. وهنتعامل مع الايرورز اللي ممكن تظهرك لما ترفع فايل غير الصور .. وهنبدأ نضيف الصور للمنتج بتاعنا
 
-- `GET /vendor/:vendorId` — Retrieve vendor profile  
-- `POST /vendor/:vendorId/availability` — Set store as open/closed  
+10- Authentication And Authorization
 
-### Catalog / Menu
+خلال القسم ده هنشرح عمليه المصادقة بشكل تفصيلي وهنشوف ازاي تسجيل الدخول وانشاء الحساب ونسيت كلمه المرور وازاي بتعمل التوكن وازاي بنعمل عمليه التحقق عليه ..كمان هنشتغل علي صلاحيات المستخدمين وهيكون عندنا ادمن ومانجر ويوزر عادي وكل واحد ليه صلاحيات مختلفة عن التاني... القسم ده مهم جدا وهتستفاد منه جدا
 
-- `GET /vendor/:vendorId/menu` — Fetch current menu  
-- `PUT /vendor/:vendorId/menu` — Submit or update menu (items, categories)  
-- `PATCH /vendor/:vendorId/menu/items/:itemId/availability` — Toggle availability of a menu item  
+11- Reviews, Wishlist And User Addresses
 
-### Order Webhooks
+خلال القسم ده هنبدأ نشتغل علي التقييمات وهنشوف ازاي هنمكن المتسخدم انه يضيف تقييم علي المنتجات وكمان هنحسب متوسط عدد التقييمات علي المنتج الواحد بالاضافة للعدد الكلي للتقيمات علي المنتج الواحد ، كمان هنشرح ازاي نمكن المسخدم انه يضيف منتج لقائمة المفضلة وفي نفس الوقت يقدر يحذفه ، كمان هنمكن المستخدم من انه يضيف عنوان لدفتر العناوين بتاعه يقدر يستخدمه لما يجي يطلب اوردر .
 
-These are endpoints Talabat may call to notify your system of order events:
+12- Coupons And Shopping Cart
 
-- `POST /webhook/order-dispatch` — New incoming order  
-- `POST /webhook/order-updated` — Order status changed or canceled  
+خلال القسم ده هنبدأ نمكن الادمن من انه ينشأ الكوبونات وكل كوبون بيكون ليه تاريخ معين ينتهي فيه ونسبة خصم معينة بيحددها الادمن ... والمستخدم هيقدر يستخدم الكوبون ده عشان يتسفاد من الخصم .. كمان هنمكن المستخدم من انه ينشأ سلة المنتجات اللي هيبدأ يضيف فيها المنتجات اللي عايز يشتريها ويعدل يختار ويعدل في كمية المنتجات لو متاح كمية منها في المخزن بالاضافة انه يقدر يضيف كوبون خصم علي السلة .
 
-### Order Management (Outgoing / Confirmations)
+13- Cash And Online Orders, Online Payments And Deployments
 
-- `POST /vendor/:vendorId/order/:orderId/accept` — Accept an order  
-- `POST /vendor/:vendorId/order/:orderId/reject` — Reject an order (with reason)  
-- `POST /vendor/:vendorId/order/:orderId/status` — Update status (e.g. “ready”, “picked up”)
+خلال القسم ده هنبدأ نشتغل علي الاورد ر او الطلبية سواء الاوردر ده هيتم دفعه كاش او عند الاستلام او الاوردر ده هيتم دفعه من خلال بطاقة دفع او محفظة الكترنية زي ابل باي او غيره .. هيتم الربط مع بوابة الدفع ونشوف ايه وسائل الدفع اللي بتوفرها بوابة الدفع وهنعمل عميلة الدفع من خلالها ... وهنشوف ازاي بنشوف عملية الدفع نجحت ولا لا .. وازاي نعمل اوردر في حالة نجاح عملية الدفع .. هنتكلم بالتفصيل عن الدفع الكاش والدفع الالكتروني .. وفي الاخر هنرفع التطبيق علي هيروكو عشان تقدر تشاركه مع الفرونت اند او تحط اللينك في البرورتفوليو بتاعك
 
----
+14- Security
 
-## Middleware & Utilities
+خلال القسم ده هنتكلم شويه عن وسائل الامان اللي ممكن تستخدمها عشان تأمن التطبيق بتاعك
 
-- **Request Validation**: Validate request bodies & parameters (e.g., via `Joi`, `express-validator`, or custom validator).  
-- **Authentication Middleware**: Ensure incoming requests have valid tokens or client credentials.  
-- **Webhook Signature Validation**: For security, verify webhook origin via signature / secret.  
-- **Error Middleware**: Centralized error handler to respond with friendly error format (code, message)  
-- **Logging Utility**: Log request / response details, errors, etc.  
-- **Helpers / Utils**: Formatting timestamps, response wrapping (e.g. `{ data: ..., error: null }`), retry logic, etc.
+15- Enhancements
 
----
+خلال القسم ده هنضيف فيه التحسينات اللي هتتضاف في الكورس ... بالاضافة لو فيه مشاكل ظهرت هنسجلها فيديو ونضيفه في السكشن ده
 
-## Error Handling & Logging
+16- Appendix
 
-- All uncaught errors should be handled by a centralized middleware that returns a JSON error response.  
-- Errors should include an error code, message, and optionally details (in development only).  
-- Logging should capture at least: request path, params, method, error stack, timestamps.  
-- Use log levels (info, warn, error) appropriately.
+خلال القسم ده هضفلكم شويه دروس عن الجافا سكريبت عشان ترجعو ليها لو عايز تتاسس فيها عشان تساعدك وانت شغال في الكورس
 
----
 
-## Security Considerations
-
-- Never expose secrets, client credentials, or private keys.  
-- Use HTTPS / SSL for all webhook and client communication.  
-- Validate payload signatures (if Talabat supports that) to avoid spoofed webhooks.  
-- Rate-limit incoming requests (e.g. via `express-rate-limit`) to prevent abuse.  
-- Sanitize and validate all user input / path parameters.  
-- Use secure headers (e.g. via `helmet`) and CORS policies if needed.
-
----
-
-## Testing
-
-- Write **unit tests** for individual service / utility modules (e.g. using Mocha, Jest).  
-- Write **integration / end-to-end tests** to simulate real HTTP requests (e.g. via Supertest).  
-- Optionally, mock external calls to Talabat APIs to test your routes without dependency.  
-- Include test scripts in `package.json`, e.g.:
-
-  ```json
-  "scripts": {
-    "test": "jest --coverage",
-    "test:watch": "jest --watch"
-  }
-  ```
-
-- Aim for good code coverage, especially around error paths and edge cases.
-
----
-
-## Contribution
-
-Contributions, bug reports, and pull requests are welcome! Here’s a suggested workflow:
-
-1. Fork the repository  
-2. Create a feature branch: `git checkout -b feature/awesome-feature`  
-3. Write code (with tests)  
-4. Ensure all tests pass and code style is consistent  
-5. Submit a Pull Request explaining your changes  
-
-Please follow the existing code style, naming conventions, and document newly added endpoints.
-
----
-
-## License
-
-This project is licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
-
----
-
-## Acknowledgements / References
-
-- Talabat / Delivery Hero Integration API documentation: managing menus, orders, stores, webhooks.  
-- Node.js / Express best practices  
-- Community resources on building REST APIs

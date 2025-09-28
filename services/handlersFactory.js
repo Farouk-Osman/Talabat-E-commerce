@@ -1,312 +1,81 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable new-cap */
-
 const asyncHandler = require('express-async-handler');
-const sharp = require('sharp');
-const { randomUUID } = require('crypto');
-const fs = require('fs');
-const path = require('path');
-const apiError = require('../utils/apiError');
-const apiFeatures = require('../utils/apiFeatures');
-const getImageUrl = require('../utils/getImageUrl');
+const ApiError = require('../utils/apiError');
+const ApiFeatures = require('../utils/apiFeatures');
 
-const ensureDir = (dir) => {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-};
-
-const processImage = async (file, destPath, size = 800) => {
-  ensureDir(path.dirname(destPath));
-  if (file.buffer) {
-    await sharp(file.buffer)
-      .resize(size, size)
-      .toFormat('jpeg')
-      .jpeg({ quality: 95 })
-      .toFile(destPath);
-  } else if (file.path) {
-    await sharp(file.path)
-      .resize(size, size)
-      .toFormat('jpeg')
-      .jpeg({ quality: 95 })
-      .toFile(destPath);
-  } else {
-    throw new Error('Invalid file object');
-  }
-};
-
-const mapDocImages = (doc, req, imageFields = []) => {
-  if (!doc) return doc;
-  const obj = doc.toObject ? doc.toObject() : doc;
-  imageFields.forEach((field) => {
-    if (obj[field]) {
-      if (Array.isArray(obj[field])) {
-        obj[field] = obj[field].map((p) => getImageUrl(req, p));
-      } else {
-        obj[field] = getImageUrl(req, obj[field]);
-      }
-    }
-  });
-  return obj;
-};
-
-const safeUnlink = (filePath) => {
-  try {
-    if (!filePath || typeof filePath !== 'string') return;
-    // only delete local uploads and avoid default images
-    if (!filePath.startsWith('uploads/') || filePath.includes('default-'))
-      return;
-    const abs = path.resolve(filePath);
-    if (fs.existsSync(abs)) fs.unlinkSync(abs);
-  } catch (err) {
-    // swallow errors to avoid crashing on file removal
-    // optionally log here
-  }
-};
-
-const deleteOne = (Model, options = {}) =>
+exports.deleteOne = (Model) =>
   asyncHandler(async (req, res, next) => {
     const { id } = req.params;
-    // find doc first so we can remove files if needed
-    const doc = await Model.findById(id);
-    if (!doc) {
-      return next(new apiError('No document found with that ID', 404));
+    const document = await Model.findByIdAndDelete(id);
+
+    if (!document) {
+      return next(new ApiError(`No document for this id ${id}`, 404));
     }
 
-    // remove files for singleImageField
-    if (options.singleImageField && doc[options.singleImageField]) {
-      const p = doc[options.singleImageField];
-      safeUnlink(p);
-    }
+    // Trigger "remove" event when update document
+    document.remove();
+    res.status(204).send();
+  });
 
-    // remove files for imageFields
-    if (options.imageFields && Array.isArray(options.imageFields)) {
-      for (const field of options.imageFields) {
-        const val = doc[field];
-        if (Array.isArray(val)) {
-          val.forEach((p) => safeUnlink(p));
-        } else {
-          safeUnlink(val);
-        }
-      }
-    }
-
-    await Model.findByIdAndDelete(id);
-    res.status(204).json({
-      status: 'success',
-      data: null,
+exports.updateOne = (Model) =>
+  asyncHandler(async (req, res, next) => {
+    const document = await Model.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
     });
-  });
 
-// options: { singleImageField, imageFields: [field1, field2], folderByField: { field: 'uploads/..' }, sizes: { field: size } }
-const updateOne = (Model, options = {}) =>
-  asyncHandler(async (req, res, next) => {
-    const { id } = req.params;
-
-    // load existing document to know previous file paths
-    const existing = await Model.findById(id);
-    if (!existing)
-      return next(new apiError('No document found with that ID', 404));
-
-    // Process single file (req.file) for singleImageField
-    if (options.singleImageField && req.file) {
-      const folder =
-        (options.folderByField &&
-          options.folderByField[options.singleImageField]) ||
-        `uploads/${String(Model.modelName).toLowerCase()}s`;
-      ensureDir(folder);
-      const filename = `${String(Model.modelName).toLowerCase()}-${randomUUID()}-${Date.now()}.jpeg`;
-      const dest = `${folder}/${filename}`;
-      await processImage(
-        req.file,
-        dest,
-        (options.sizes && options.sizes[options.singleImageField]) || 400
+    if (!document) {
+      return next(
+        new ApiError(`No document for this id ${req.params.id}`, 404)
       );
-      req.body[options.singleImageField] = dest;
-      // remove previous file if it exists
-      if (existing[options.singleImageField])
-        safeUnlink(existing[options.singleImageField]);
     }
-
-    // Process multiple fields from req.files
-    if (options.imageFields && req.files) {
-      for (const field of options.imageFields) {
-        if (req.files[field]) {
-          const files = req.files[field];
-          const folder =
-            (options.folderByField && options.folderByField[field]) ||
-            `uploads/${String(Model.modelName).toLowerCase()}s`;
-          ensureDir(folder);
-          if (Array.isArray(files)) {
-            const paths = [];
-            await Promise.all(
-              files.map(async (file, idx) => {
-                const filename = `${String(Model.modelName).toLowerCase()}-${randomUUID()}-${Date.now()}-${idx + 1}.jpeg`;
-                const dest = `${folder}/${filename}`;
-                await processImage(
-                  file,
-                  dest,
-                  (options.sizes && options.sizes[field]) || 800
-                );
-                paths.push(dest);
-              })
-            );
-            // delete previous images array if existed
-            if (existing[field]) {
-              const prev = existing[field];
-              if (Array.isArray(prev)) prev.forEach((p) => safeUnlink(p));
-              else safeUnlink(prev);
-            }
-            req.body[field] = paths;
-          } else {
-            const filename = `${String(Model.modelName).toLowerCase()}-${randomUUID()}-${Date.now()}.jpeg`;
-            const dest = `${folder}/${filename}`;
-            await processImage(
-              files,
-              dest,
-              (options.sizes && options.sizes[field]) || 400
-            );
-            // delete previous single file
-            if (existing[field]) safeUnlink(existing[field]);
-            req.body[field] = dest;
-          }
-        }
-      }
-    }
-
-    const doc = await Model.findByIdAndUpdate(id, req.body, { new: true });
-    if (!doc) {
-      return next(new apiError('No document found with that ID', 404));
-    }
-
-    const result = options.returnImageFields
-      ? mapDocImages(doc, req, options.returnImageFields)
-      : doc;
-    res.status(200).json({
-      status: 'success',
-      data: result,
-    });
+    // Trigger "save" event when update document
+    document.save();
+    res.status(200).json({ data: document });
   });
 
-const createOne = (Model, options = {}) =>
+exports.createOne = (Model) =>
   asyncHandler(async (req, res) => {
-    // Process single file
-    if (options.singleImageField && req.file) {
-      const folder =
-        (options.folderByField &&
-          options.folderByField[options.singleImageField]) ||
-        `uploads/${String(Model.modelName).toLowerCase()}s`;
-      ensureDir(folder);
-      const filename = `${String(Model.modelName).toLowerCase()}-${randomUUID()}-${Date.now()}.jpeg`;
-      const dest = `${folder}/${filename}`;
-      await processImage(
-        req.file,
-        dest,
-        (options.sizes && options.sizes[options.singleImageField]) || 400
-      );
-      req.body[options.singleImageField] = dest;
-    }
-
-    // Process multiple fields
-    if (options.imageFields && req.files) {
-      for (const field of options.imageFields) {
-        if (req.files[field]) {
-          const files = req.files[field];
-          const folder =
-            (options.folderByField && options.folderByField[field]) ||
-            `uploads/${String(Model.modelName).toLowerCase()}s`;
-          ensureDir(folder);
-          if (Array.isArray(files)) {
-            const paths = [];
-            await Promise.all(
-              files.map(async (file, idx) => {
-                const filename = `${String(Model.modelName).toLowerCase()}-${randomUUID()}-${Date.now()}-${idx + 1}.jpeg`;
-                const dest = `${folder}/${filename}`;
-                await processImage(
-                  file,
-                  dest,
-                  (options.sizes && options.sizes[field]) || 800
-                );
-                paths.push(dest);
-              })
-            );
-            req.body[field] = paths;
-          } else {
-            const filename = `${String(Model.modelName).toLowerCase()}-${randomUUID()}-${Date.now()}.jpeg`;
-            const dest = `${folder}/${filename}`;
-            await processImage(
-              files,
-              dest,
-              (options.sizes && options.sizes[field]) || 400
-            );
-            req.body[field] = dest;
-          }
-        }
-      }
-    }
-
-    const doc = await Model.create(req.body);
-    const result = options.returnImageFields
-      ? mapDocImages(doc, req, options.returnImageFields)
-      : doc;
-    res.status(201).json({
-      status: 'success',
-      data: result,
-    });
+    const newDoc = await Model.create(req.body);
+    res.status(201).json({ data: newDoc });
   });
 
-const getOne = (Model, popOptions, options = {}) =>
+exports.getOne = (Model, populationOpt) =>
   asyncHandler(async (req, res, next) => {
     const { id } = req.params;
+    // 1) Build query
     let query = Model.findById(id);
-    if (popOptions) {
-      query = query.populate(popOptions);
+    if (populationOpt) {
+      query = query.populate(populationOpt);
     }
-    const doc = await query;
-    if (!doc) {
-      return next(new apiError('No document found with that ID', 404));
+
+    // 2) Execute query
+    const document = await query;
+
+    if (!document) {
+      return next(new ApiError(`No document for this id ${id}`, 404));
     }
-    const result = options.returnImageFields
-      ? mapDocImages(doc, req, options.returnImageFields)
-      : doc;
-    res.status(200).json({
-      status: 'success',
-      data: result,
-    });
+    res.status(200).json({ data: document });
   });
 
-const getAll = (Model, options = {}) =>
+exports.getAll = (Model, modelName = '') =>
   asyncHandler(async (req, res) => {
-    const apiFeature = new apiFeatures(Model.find(), req.query)
-      .filter()
-      .sort()
-      .limitFields()
-      .paginate()
-      .search();
-    const { mongooseQuery, paginationResult } = apiFeature;
-    const docs = await mongooseQuery;
-    let results = docs;
-    if (options.returnImageFields && Array.isArray(options.returnImageFields)) {
-      results = docs.map((d) =>
-        mapDocImages(d, req, options.returnImageFields)
-      );
+    let filter = {};
+    if (req.filterObj) {
+      filter = req.filterObj;
     }
-    res.status(200).json({
-      status: 'success',
-      results: results.length,
-      pagination: paginationResult,
-      data: {
-        docs: results,
-      },
-    });
-  });
+    // Build query
+    const documentsCounts = await Model.countDocuments();
+    const apiFeatures = new ApiFeatures(Model.find(filter), req.query)
+      .paginate(documentsCounts)
+      .filter()
+      .search(modelName)
+      .limitFields()
+      .sort();
 
-module.exports = {
-  deleteOne,
-  updateOne,
-  createOne,
-  getOne,
-  getAll,
-  processImage,
-  mapDocImages,
-  ensureDir,
-};
+    // Execute query
+    const { mongooseQuery, paginationResult } = apiFeatures;
+    const documents = await mongooseQuery;
+
+    res
+      .status(200)
+      .json({ results: documents.length, paginationResult, data: documents });
+  });

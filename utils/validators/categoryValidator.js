@@ -1,41 +1,39 @@
-const { check } = require('express-validator');
-const validatorMiddleware = require('../../middlewares/validatorMiddlewares');
+const slugify = require('slugify');
+const { check, body } = require('express-validator');
+const validatorMiddleware = require('../../middlewares/validatorMiddleware');
 
-const getCategoryByIdValidator = [
-  check('id').isMongoId().withMessage('Invalid category ID'),
+exports.getCategoryValidator = [
+  check('id').isMongoId().withMessage('Invalid category id format'),
   validatorMiddleware,
 ];
-const updateCategoryValidator = [
-  check('id').isMongoId().withMessage('Invalid category ID'),
+
+exports.createCategoryValidator = [
   check('name')
     .notEmpty()
-    .withMessage('Category name is required')
+    .withMessage('Category required')
     .isLength({ min: 3 })
-    .withMessage('Category name must be at least 3 characters long')
-    .isLength({ max: 50 })
-    .withMessage('Category name must be at most 50 characters long'),
+    .withMessage('Too short category name')
+    .isLength({ max: 32 })
+    .withMessage('Too long category name')
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
   validatorMiddleware,
 ];
 
-const deleteCategoryValidator = [
-  check('id').isMongoId().withMessage('Invalid category ID'),
+exports.updateCategoryValidator = [
+  check('id').isMongoId().withMessage('Invalid category id format'),
+  body('name')
+    .optional()
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
   validatorMiddleware,
 ];
 
-const createCategoryValidator = [
-  check('name')
-    .notEmpty()
-    .withMessage('Category name is required')
-    .isLength({ min: 3 })
-    .withMessage('Category name must be at least 3 characters long')
-    .isLength({ max: 50 })
-    .withMessage('Category name must be at most 50 characters long'),
+exports.deleteCategoryValidator = [
+  check('id').isMongoId().withMessage('Invalid category id format'),
   validatorMiddleware,
 ];
-
-module.exports = {
-  getCategoryByIdValidator,
-  updateCategoryValidator,
-  deleteCategoryValidator,
-  createCategoryValidator,
-};

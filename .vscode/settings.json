@@ -1,3 +1,10 @@
 {
-  "postman.settings.dotenv-detection-notification-visibility": false
+  "separators.enabledSymbols": [
+    "Classes",
+    "Enums",
+    "Interfaces",
+    "Namespaces",
+    "Structs"
+  ],
+  "cSpell.words": ["uuidv", "virtuals"]
 }

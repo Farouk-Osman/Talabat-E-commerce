@@ -1,98 +1,53 @@
-/* eslint-disable new-cap */
+const sharp = require('sharp');
+const { v4: uuidv4 } = require('uuid');
 const asyncHandler = require('express-async-handler');
-const slugify = require('slugify');
-const categoryModel = require('../models/categoryModel');
-const ApiError = require('../utils/apiError');
-const apiFeatures = require('../utils/apiFeatures');
 
-const createCategory = asyncHandler(async (req, res) => {
-  const { name } = req.body;
-  if (!name) {
-    res.status(400);
-    throw new ApiError('Category name is required', 400);
+const factory = require('./handlersFactory');
+const { uploadSingleImage } = require('../middlewares/uploadImageMiddleware');
+const Category = require('../models/categoryModel');
+
+// Upload single image
+exports.uploadCategoryImage = uploadSingleImage('image');
+
+// Image processing
+exports.resizeImage = asyncHandler(async (req, res, next) => {
+  const filename = `category-${uuidv4()}-${Date.now()}.jpeg`;
+
+  if (req.file) {
+    await sharp(req.file.buffer)
+      .resize(600, 600)
+      .toFormat('jpeg')
+      .jpeg({ quality: 95 })
+      .toFile(`uploads/categories/${filename}`);
+
+    // Save image into our db
+    req.body.image = filename;
   }
-  const category = await categoryModel.create({
-    name,
-    slug: slugify(name),
-  });
-  res.status(201).json({
-    status: 'success',
-    data: category,
-  });
+
+  next();
 });
 
-const getCategories = asyncHandler(async (req, res) => {
-  const apiFeature = new apiFeatures(categoryModel.find(), req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-  const { mongooseQuery, paginationResult } = apiFeature;
-  const categories = await mongooseQuery;
-  res.status(200).json({
-    status: 'success',
-    results: categories.length,
-    pagination: paginationResult,
-    data: {
-      categories
-    }
-  });
-});
+// @desc    Get list of categories
+// @route   GET /api/v1/categories
+// @access  Public
+exports.getCategories = factory.getAll(Category);
 
-const updateCategory = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { name } = req.body;
-  if (!name) {
-    res.status(400);
-    throw new ApiError('Category name is required', 400);
-  }
-  const category = await categoryModel.findByIdAndUpdate(
-    id,
-    {
-      name,
-      slug: slugify(name),
-    },
-    { new: true }
-  );
-  if (!category) {
-    res.status(404);
-    throw new ApiError('Category not found', 404);
-  }
-  res.status(200).json({
-    status: 'success',
-    data: category,
-  });
-});
+// @desc    Get specific category by id
+// @route   GET /api/v1/categories/:id
+// @access  Public
+exports.getCategory = factory.getOne(Category);
 
-const deleteCategory = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const category = await categoryModel.findByIdAndDelete(id);
-  if (!category) {
-    res.status(404);
-    throw new ApiError('Category not found', 404);
-  }
-  res.status(204).json({
-    status: 'success',
-    data: null,
-  });
-});
+// @desc    Create category
+// @route   POST  /api/v1/categories
+// @access  Private/Admin-Manager
+exports.createCategory = factory.createOne(Category);
 
-const getCategoryById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const category = await categoryModel.findById(id);
-  if (!category) {
-    res.status(404);
-    throw new ApiError('Category not found', 404);
-  }
-  res.status(200).json({
-    status: 'success',
-    data: category,
-  });
-});
-module.exports = {
-  createCategory,
-  getCategories,
-  updateCategory,
-  deleteCategory,
-  getCategoryById,
-};
+// @desc    Update specific category
+// @route   PUT /api/v1/categories/:id
+// @access  Private/Admin-Manager
+exports.updateCategory = factory.updateOne(Category);
+
+// @desc    Delete specific category
+// @route   DELETE /api/v1/categories/:id
+// @access  Private/Admin
+exports.deleteCategory = factory.deleteOne(Category);

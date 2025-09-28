@@ -1,32 +1,57 @@
 const express = require('express');
-const { uploadProductImages } = require('../utils/uploadImage');
-const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const {
-  createProductValidator,
   getProductValidator,
+  createProductValidator,
   updateProductValidator,
   deleteProductValidator,
 } = require('../utils/validators/productValidator');
+
 const {
-  createProduct,
   getProducts,
   getProduct,
+  createProduct,
   updateProduct,
   deleteProduct,
-} = require('../services/productServices');
+  uploadProductImages,
+  resizeProductImages,
+} = require('../services/productService');
+const authService = require('../services/authService');
+const reviewsRoute = require('./reviewRoute');
 
 const router = express.Router();
+
+// POST   /products/jkshjhsdjh2332n/reviews
+// GET    /products/jkshjhsdjh2332n/reviews
+// GET    /products/jkshjhsdjh2332n/reviews/87487sfww3
+router.use('/:productId/reviews', reviewsRoute);
+
 router
   .route('/')
-  .post(protect, restrictTo('admin'), uploadProductImages(), createProductValidator, createProduct);
-router.route('/').get(getProducts);
+  .get(getProducts)
+  .post(
+    authService.protect,
+    authService.allowedTo('admin', 'manager'),
+    uploadProductImages,
+    resizeProductImages,
+    createProductValidator,
+    createProduct
+  );
 router
   .route('/:id')
   .get(getProductValidator, getProduct)
-  .put(protect, restrictTo('admin'), uploadProductImages(), updateProductValidator, updateProduct)
-  .delete(protect, restrictTo('admin'), deleteProductValidator, deleteProduct);
-
+  .put(
+    authService.protect,
+    authService.allowedTo('admin', 'manager'),
+    uploadProductImages,
+    resizeProductImages,
+    updateProductValidator,
+    updateProduct
+  )
+  .delete(
+    authService.protect,
+    authService.allowedTo('admin'),
+    deleteProductValidator,
+    deleteProduct
+  );
 
 module.exports = router;
-
-

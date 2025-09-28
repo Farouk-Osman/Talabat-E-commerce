@@ -1,61 +1,94 @@
+const path = require('path');
+
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
-const dbConnection = require('./config/database');
+const cors = require('cors');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
+const hpp = require('hpp');
+
+dotenv.config({ path: 'config.env' });
 const ApiError = require('./utils/apiError');
-const globalErrorHandler = require('./middlewares/errorMiddleware');
-const categoryRoute = require('./routes/categoryRoute');
-const subCategoryRoute = require('./routes/subCategoryRoute');
-const brandRoute = require('./routes/brandRoute');
-const productRoute = require('./routes/productRoute');
-const userRoute = require('./routes/userRoute');
-const authRoute = require('./routes/authRoute');
+const globalError = require('./middlewares/errorMiddleware');
+const dbConnection = require('./config/database');
+// Routes
+const mountRoutes = require('./routes');
+const { webhookCheckout } = require('./services/orderService');
 
-const app = express();
-
-// Load environment variables
-dotenv.config({ path: './.env' });
-const PORT = process.env.PORT || 3000;
-
-// Middleware
-app.use(express.json({ limit: '20kb' }));
-app.use(express.urlencoded({ extended: true, limit: '20kb' }));
-app.use(express.static('uploads'));
-app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
-console.log(`Environment: ${process.env.NODE_ENV}`);
-
-// Connect to database
+// Connect with db
 dbConnection();
 
+// express app
+const app = express();
+
+// Enable other domains to access your application
+app.use(cors());
+app.options('*', cors());
+
+// compress all responses
+app.use(compression());
+
+// Checkout webhook
+app.post(
+  '/webhook-checkout',
+  express.raw({ type: 'application/json' }),
+  webhookCheckout
+);
+
+// Middlewares
+app.use(express.json({ limit: '20kb' }));
+app.use(express.static(path.join(__dirname, 'uploads')));
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+  console.log(`mode: ${process.env.NODE_ENV}`);
+}
+
+// Limit each IP to 100 requests per `window` (here, per 15 minutes)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message:
+    'Too many accounts created from this IP, please try again after an hour',
+});
+
+// Apply the rate limiting middleware to all requests
+app.use('/api', limiter);
+
+// Middleware to protect against HTTP Parameter Pollution attacks
+app.use(
+  hpp({
+    whitelist: [
+      'price',
+      'sold',
+      'quantity',
+      'ratingsAverage',
+      'ratingsQuantity',
+    ],
+  })
+);
+
 // Mount Routes
-app.use('/api/v1/categories', categoryRoute);
-app.use('/api/v1/categories/:categoryId/subcategories', subCategoryRoute);
-app.use('/api/v1/subcategories', subCategoryRoute);
-app.use('/api/v1/brands', brandRoute);
-app.use('/api/v1/products', productRoute);
-app.use('/api/v1/users', userRoute);
-app.use('/api/v1/auth', authRoute);
+mountRoutes(app);
 
-// Unhandled routes
-app.use((req, res, next) => {
-  next(new ApiError(`Can't find ${req.originalUrl}`, 404));
+app.all('*', (req, res, next) => {
+  next(new ApiError(`Can't find this route: ${req.originalUrl}`, 400));
 });
 
-// Global error handling middleware
-app.use(globalErrorHandler);
+// Global error handling middleware for express
+app.use(globalError);
 
-// Start server
+const PORT = process.env.PORT || 8000;
 const server = app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`App running running on port ${PORT}`);
 });
 
-// Export app and server for testing
-module.exports = { app, server };
-
+// Handle rejection outside express
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err.name, err.message);
+  console.error(`UnhandledRejection Errors: ${err.name} | ${err.message}`);
   server.close(() => {
-    console.error('Server closed');
+    console.error(`Shutting down....`);
     process.exit(1);
   });
 });

@@ -1,186 +1,141 @@
-const { check } = require('express-validator');
-const validatorMiddleware = require('../../middlewares/validatorMiddlewares');
-const categoryModel = require('../../models/categoryModel');
-const subCategoryModel = require('../../models/subCategory');
+const slugify = require('slugify');
+const { check, body } = require('express-validator');
+const validatorMiddleware = require('../../middlewares/validatorMiddleware');
+const Category = require('../../models/categoryModel');
+const SubCategory = require('../../models/subCategoryModel');
 
-const createProductValidator = [
+exports.createProductValidator = [
   check('title')
-    .notEmpty()
-    .withMessage('Product title is required')
     .isLength({ min: 3 })
-    .withMessage('Product title must be at least 3 characters long')
-    .isLength({ max: 100 })
-    .withMessage('Product title must be at most 100 characters long'),
+    .withMessage('must be at least 3 chars')
+    .notEmpty()
+    .withMessage('Product required')
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
   check('description')
     .notEmpty()
     .withMessage('Product description is required')
-    .isLength({ max: 500 })
-    .withMessage('Product description must be at most 500 characters long'),
-  check('price')
-    .notEmpty()
-    .withMessage('Product price is required')
-    .isFloat({ min: 0 })
-    .withMessage('Product price must be a positive number')
-    .isNumeric()
-    .withMessage('Product price must be a number'),
-  check('category')
-    .notEmpty()
-    .withMessage('Product category is required')
-    .isMongoId()
-    .withMessage('Invalid Product category ID')
-    .custom((value) =>
-      categoryModel.findById(value).then((category) => {
-        if (!category) {
-          return Promise.reject(new Error('Category not found'));
-        }
-      })
-    ),
-  check('subcategories')
-    .optional()
-    .isArray()
-    .withMessage('Subcategories must be an array')
-    .custom((value) =>
-      subCategoryModel
-        .find({ _id: { $exists: true, $in: value } })
-        .then((subcategories) => {
-          if (subcategories.length !== value.length) {
-            return Promise.reject(
-              new Error('One or more Subcategories not found')
-            );
-          }
-        })
-    )
-    .custom((value, { req }) => subCategoryModel.find({ category: req.body.category }).then((subcategories) => {
-      const subcategoryIdsInDB = [];
-        subcategories.forEach(subcategory => subcategoryIdsInDB.push(subcategory._id.toString()));
-        const checker = value.every(v => subcategoryIdsInDB.includes(v));
-        if (!checker) {
-          return Promise.reject(
-            new Error('One or more Subcategories do not belong to the specified category')
-          );
-        }
-    })),
-  check('brand')
-    .notEmpty()
-    .withMessage('Product brand is required')
-    .isMongoId()
-    .withMessage('Invalid Product brand ID'),
+    .isLength({ max: 2000 })
+    .withMessage('Too long description'),
   check('quantity')
     .notEmpty()
     .withMessage('Product quantity is required')
-    .isInt({ min: 0 })
-    .withMessage('Product quantity must be a non-negative integer'),
+    .isNumeric()
+    .withMessage('Product quantity must be a number'),
+  check('sold')
+    .optional()
+    .isNumeric()
+    .withMessage('Product quantity must be a number'),
+  check('price')
+    .notEmpty()
+    .withMessage('Product price is required')
+    .isNumeric()
+    .withMessage('Product price must be a number')
+    .isLength({ max: 32 })
+    .withMessage('To long price'),
   check('priceAfterDiscount')
     .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Product price after discount must be a positive number')
     .isNumeric()
-    .withMessage('Product price after discount must be a number')
+    .withMessage('Product priceAfterDiscount must be a number')
+    .toFloat()
     .custom((value, { req }) => {
-      if (value >= req.body.price) {
-        throw new Error(
-          'Product price after discount must be less than the regular price'
-        );
+      if (req.body.price <= value) {
+        throw new Error('priceAfterDiscount must be lower than price');
       }
       return true;
     }),
 
+  check('colors')
+    .optional()
+    .isArray()
+    .withMessage('availableColors should be array of string'),
+  check('imageCover').notEmpty().withMessage('Product imageCover is required'),
+  check('images')
+    .optional()
+    .isArray()
+    .withMessage('images should be array of string'),
+  check('category')
+    .notEmpty()
+    .withMessage('Product must be belong to a category')
+    .isMongoId()
+    .withMessage('Invalid ID formate')
+    .custom((categoryId) =>
+      Category.findById(categoryId).then((category) => {
+        if (!category) {
+          return Promise.reject(
+            new Error(`No category for this id: ${categoryId}`)
+          );
+        }
+      })
+    ),
+
+  check('subcategories')
+    .optional()
+    .isMongoId()
+    .withMessage('Invalid ID formate')
+    .custom((subcategoriesIds) =>
+      SubCategory.find({ _id: { $exists: true, $in: subcategoriesIds } }).then(
+        (result) => {
+          if (result.length < 1 || result.length !== subcategoriesIds.length) {
+            return Promise.reject(new Error(`Invalid subcategories Ids`));
+          }
+        }
+      )
+    )
+    .custom((val, { req }) =>
+      SubCategory.find({ category: req.body.category }).then(
+        (subcategories) => {
+          const subCategoriesIdsInDB = [];
+          subcategories.forEach((subCategory) => {
+            subCategoriesIdsInDB.push(subCategory._id.toString());
+          });
+          // check if subcategories ids in db include subcategories in req.body (true)
+          const checker = (target, arr) => target.every((v) => arr.includes(v));
+          if (!checker(val, subCategoriesIdsInDB)) {
+            return Promise.reject(
+              new Error(`subcategories not belong to category`)
+            );
+          }
+        }
+      )
+    ),
+
+  check('brand').optional().isMongoId().withMessage('Invalid ID formate'),
+  check('ratingsAverage')
+    .optional()
+    .isNumeric()
+    .withMessage('ratingsAverage must be a number')
+    .isLength({ min: 1 })
+    .withMessage('Rating must be above or equal 1.0')
+    .isLength({ max: 5 })
+    .withMessage('Rating must be below or equal 5.0'),
+  check('ratingsQuantity')
+    .optional()
+    .isNumeric()
+    .withMessage('ratingsQuantity must be a number'),
+
   validatorMiddleware,
 ];
 
-
-const getProductValidator = [
-    check('id').isMongoId().withMessage('Invalid Product ID'),
-    validatorMiddleware,
+exports.getProductValidator = [
+  check('id').isMongoId().withMessage('Invalid ID formate'),
+  validatorMiddleware,
 ];
 
-
-const updateProductValidator = [
-    check('id').isMongoId().withMessage('Invalid Product ID'),
-    check('title')
-        .optional()
-        .isLength({ min: 3 })
-        .withMessage('Product title must be at least 3 characters long')
-        .isLength({ max: 100 })
-        .withMessage('Product title must be at most 100 characters long'),
-    check('description')
-        .optional()
-        .isLength({ max: 500 })
-        .withMessage('Product description must be at most 500 characters long'),
-    check('price')
-        .optional()
-        .isFloat({ min: 0 })
-        .withMessage('Product price must be a positive number')
-        .isNumeric()
-        .withMessage('Product price must be a number'),
-    check('category')
-        .optional()
-        .isMongoId()
-        .withMessage('Invalid Product category ID'),
-    check('subcategories')
-        .optional()
-        .isArray()
-        .withMessage('Subcategories must be an array')
-        .custom((value) => {
-            if (!value.every((id) => id.match(/^[0-9a-fA-F]{24}$/))) {
-                throw new Error('Invalid Subcategory ID in the array');
-            }
-            return true;
-        }),
-    check('brand')
-        .optional()
-        .isMongoId()
-        .withMessage('Invalid Product brand ID'),
-    check('quantity')
-        .optional()
-        .isInt({ min: 0 })
-        .withMessage('Product quantity must be a non-negative integer'),
-    validatorMiddleware,
+exports.updateProductValidator = [
+  check('id').isMongoId().withMessage('Invalid ID formate'),
+  body('title')
+    .optional()
+    .custom((val, { req }) => {
+      req.body.slug = slugify(val);
+      return true;
+    }),
+  validatorMiddleware,
 ];
 
-
-const deleteProductValidator = [
-    check('id').isMongoId().withMessage('Invalid Product ID'),
-    validatorMiddleware,
+exports.deleteProductValidator = [
+  check('id').isMongoId().withMessage('Invalid ID formate'),
+  validatorMiddleware,
 ];
-
-
-const filterProductsValidator = [
-    check('minPrice')
-        .optional()
-        .isFloat({ min: 0 })
-        .withMessage('minPrice must be a positive number'),
-    check('maxPrice')
-        .optional()
-        .isFloat({ min: 0 })
-        .withMessage('maxPrice must be a positive number'),
-    check('category')
-        .optional()
-        .isMongoId()
-        .withMessage('Invalid Product category ID'),
-    check('brand')
-        .optional()
-        .isMongoId()
-        .withMessage('Invalid Product brand ID'),
-    check('title')
-        .optional()
-        .isString()
-        .withMessage('Title must be a string'),
-    check('sort')
-        .optional()
-        .isIn(['price', '-price', 'title', '-title', 'createdAt', '-createdAt'])
-        .withMessage('Invalid sort value'),
-    check('rating')
-        .optional()
-        .isFloat({ min: 0, max: 5 })
-        .withMessage('Rating must be a number between 0 and 5'),
-    validatorMiddleware,
-];
-
-module.exports = {
-    createProductValidator,
-    getProductValidator,
-    updateProductValidator,
-    deleteProductValidator,
-    filterProductsValidator
-};
