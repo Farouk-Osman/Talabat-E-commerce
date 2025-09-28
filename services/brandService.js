@@ -1,22 +1,24 @@
-/* eslint-disable new-cap */
-/* eslint-disable node/no-missing-require */
-/* eslint-disable import/no-unresolved */
-/* eslint-disable import/no-extraneous-dependencies */
-
 const brandModel = require('../models/brand');
 const handlersFactory = require('./handlersFactory');
 
-const deleteBrand = handlersFactory.deleteOne(brandModel);
-const updateBrand = handlersFactory.updateOne(brandModel);
-const createBrand = handlersFactory.createOne(brandModel);
-const getBrands = handlersFactory.getAll(brandModel);
+// Use handlersFactory with image support: single image field `image`
+const options = {
+  singleImageField: 'image',
+  folderByField: { image: 'uploads/brands' },
+  sizes: { image: 600 },
+  returnImageFields: ['image'],
+};
 
-const getBrandById = handlersFactory.getOne(brandModel);
+const createBrand = handlersFactory.createOne(brandModel, options);
+const getBrands = handlersFactory.getAll(brandModel, options);
+const getBrandById = handlersFactory.getOne(brandModel, null, options);
+const updateBrand = handlersFactory.updateOne(brandModel, options);
+const deleteBrand = handlersFactory.deleteOne(brandModel);
 
 module.exports = {
   createBrand,
   getBrands,
-  updateBrand,
   getBrandById,
+  updateBrand,
   deleteBrand,
 };

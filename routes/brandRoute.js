@@ -1,5 +1,6 @@
 const express = require('express');
 const { uploadSingleImage } = require('../utils/uploadImage');
+const { protect, restrictTo } = require('../middlewares/authMiddleware');
 
 const {
   createBrandValidator,
@@ -20,12 +21,12 @@ const router = express.Router();
 
 router
   .route('/')
-  .post(uploadSingleImage('image'), createBrandValidator, createBrand)
+  .post(protect, restrictTo('admin'), uploadSingleImage('image'), createBrandValidator, createBrand)
   .get(getBrands);
 router
     .route('/:id')
     .get(getBrandValidator, getBrandById)
-    .put(updateBrandValidator, updateBrand)
-    .delete(deleteBrandValidator, deleteBrand);
+    .put(protect, restrictTo('admin'), updateBrandValidator, updateBrand)
+    .delete(protect, restrictTo('admin'), deleteBrandValidator, deleteBrand);
 
 module.exports = router;

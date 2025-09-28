@@ -1,25 +1,29 @@
-/* eslint-disable node/no-missing-require */
-/* eslint-disable import/no-unresolved */
-const asyncHandler = require('express-async-handler');
-const slugify = require('slugify');
-const sharp = require('sharp');
-const { v4: uuidv4 } = require('uuid');
-const productModel = require('../models/productModel');
-const ApiError = require('../utils/apiError');
-const { mongo } = require('mongoose');
-const apiFeatures = require('../utils/apiFeatures');
 const handlersFactory = require('./handlersFactory');
+const productModel = require('../models/productModel');
 
-const getProduct = handlersFactory.getOne(productModel, 'category subCategory brand');
-const getProducts = handlersFactory.getAll(productModel);
+// Use handlersFactory with mixed images: imageCover (single) + images (array)
+const options = {
+  imageFields: ['images'],
+  singleImageField: 'imageCover',
+  folderByField: { imageCover: 'uploads/products', images: 'uploads/products' },
+  sizes: { imageCover: 800, images: 800 },
+  returnImageFields: ['imageCover', 'images'],
+};
+
+const createProduct = handlersFactory.createOne(productModel, options);
+const getProducts = handlersFactory.getAll(productModel, options);
+const getProduct = handlersFactory.getOne(
+  productModel,
+  'category brand subcategories',
+  options
+);
+const updateProduct = handlersFactory.updateOne(productModel, options);
 const deleteProduct = handlersFactory.deleteOne(productModel);
-const updateProduct = handlersFactory.updateOne(productModel);
-const createProduct = handlersFactory.createOne(productModel);
 
 module.exports = {
-    createProduct,
-    getProducts,
-    getProduct,
-    updateProduct,
-    deleteProduct,
+  createProduct,
+  getProducts,
+  getProduct,
+  updateProduct,
+  deleteProduct,
 };

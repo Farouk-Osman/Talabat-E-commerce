@@ -8,6 +8,8 @@ const categoryRoute = require('./routes/categoryRoute');
 const subCategoryRoute = require('./routes/subCategoryRoute');
 const brandRoute = require('./routes/brandRoute');
 const productRoute = require('./routes/productRoute');
+const userRoute = require('./routes/userRoute');
+const authRoute = require('./routes/authRoute');
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use('/api/v1/categories/:categoryId/subcategories', subCategoryRoute);
 app.use('/api/v1/subcategories', subCategoryRoute);
 app.use('/api/v1/brands', brandRoute);
 app.use('/api/v1/products', productRoute);
+app.use('/api/v1/users', userRoute);
+app.use('/api/v1/auth', authRoute);
 
 // Unhandled routes
 app.use((req, res, next) => {
@@ -44,6 +48,9 @@ app.use(globalErrorHandler);
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Export app and server for testing
+module.exports = { app, server };
 
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled Rejection:', err.name, err.message);
