@@ -1,105 +1,150 @@
-# Talabat — MEAN Stack Monorepo
+# Talabat E-Commerce Monorepo
 
-A full-stack e-commerce application: an Express + MongoDB REST API (`server/`) and an
-Angular single-page frontend (`client/`), managed as a single npm-workspaces monorepo.
+A polished full-stack e-commerce starter built as a Node.js + Express API and Angular frontend, managed as a npm workspaces monorepo.
 
-> Note: despite the name, this is a generic e-commerce API (categories, subcategories,
-> brands, products, users, JWT auth) — not a Talabat integration.
+> This project is a generic e-commerce application with categories, subcategories, brands, products, users, and JWT-based authentication. The Talabat name is historical branding rather than a real integration.
 
-## Repository layout
+## Highlights
 
-```
+- REST API backend in Express 5 with Mongoose and MongoDB
+- Angular 18 single-page application for browsing and admin-style management
+- JWT authentication, role-based access control, and rate limiting
+- Product and user image uploads with resizing and storage handling
+- Structured validation, centralized error handling, and test coverage
+- Docker-ready local development stack
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js |
+| Backend | Express 5, Mongoose, JWT, multer, sharp |
+| Frontend | Angular 18, TypeScript, RxJS |
+| Database | MongoDB |
+| Testing | Jest, Supertest, mongodb-memory-server |
+| Dev Ops | Docker Compose, npm workspaces |
+
+## Project Structure
+
+```text
 .
-├── package.json          # workspace root — orchestrates both apps (no app code)
-├── docker-compose.yml    # API + MongoDB stack
-├── server/               # backend: Express 5 + Mongoose REST API
-│   ├── app.js server.js
-│   ├── config/ models/ routes/ services/ middlewares/ utils/ tests/
-│   └── package.json      # @talabat/server
-└── client/               # frontend: Angular 18 standalone-components SPA
-    └── package.json      # emporium-client
+├── package.json              # Root workspace scripts and shared tooling
+├── docker-compose.yml       # API + MongoDB container setup
+├── server/                   # Backend application
+│   ├── app.js                # App bootstrap
+│   ├── server.js             # Server entrypoint
+│   ├── config/               # DB and env configuration
+│   ├── routes/               # API routes
+│   ├── services/             # Business logic and CRUD helpers
+│   ├── models/               # Mongoose schemas
+│   ├── middlewares/          # Auth, validation, error handling
+│   ├── utils/                # Validators, upload helpers, API helpers
+│   └── tests/                # Backend test suite
+└── client/                   # Angular frontend
+    └── src/                  # Components, services, routes, and styles
 ```
 
 ## Prerequisites
 
-- Node.js 20+ and npm 8+ (npm workspaces)
-- A MongoDB instance for local dev, **or** Docker (see below). Tests need neither —
-  they use an in-memory MongoDB.
+Make sure you have:
 
-## Setup
+- Node.js 20+ and npm 8+
+- MongoDB running locally, or Docker available for the included Compose setup
 
-One install at the root wires up **both** workspaces:
+## Quick Start
+
+1. Install dependencies from the repository root:
 
 ```bash
 npm install
 ```
 
-Create the backend env file from the template:
+2. Create the backend environment file:
 
 ```bash
 cp server/.env.example server/.env
-# then set DB_URI and JWT_SECRET
 ```
 
-## Run the whole stack
+3. Update the values in server/.env, especially:
+
+```env
+DB_URI=mongodb://127.0.0.1:27017/talabat
+JWT_SECRET=your_super_secret_key
+PORT=3000
+NODE_ENV=development
+```
+
+4. Start the full stack:
 
 ```bash
 npm run dev
 ```
 
-This starts **both** processes together (via `concurrently`):
+This starts:
 
-- **api** — the Express API on <http://localhost:3000> (nodemon, auto-reload)
-- **web** — the Angular dev server on <http://localhost:4200> (auto-reload)
+- API on http://localhost:3000
+- Angular app on http://localhost:4200
 
-The frontend talks to the API at `http://localhost:3000/api/v1` (configured in
-`client/src/environments/environment.ts`).
+The frontend is configured to call the API at http://localhost:3000/api/v1.
 
-## Other root commands
+## Useful Commands
 
-| Command             | What it does                                              |
-|---------------------|-----------------------------------------------------------|
-| `npm run dev`       | Run API + Angular dev server together                     |
-| `npm run dev:server`| Run only the API (nodemon)                                |
-| `npm run dev:client`| Run only the Angular dev server                           |
-| `npm run build`     | Production build of the Angular client                    |
-| `npm start`         | Run the API in production mode                            |
-| `npm run lint`      | Lint the backend                                          |
-| `npm test`          | Run the backend's hermetic Jest suite                     |
+| Command | Purpose |
+|---|---|
+| npm run dev | Launch both backend and frontend together |
+| npm run dev:server | Run only the API in development mode |
+| npm run dev:client | Run only the Angular client |
+| npm run build | Build the Angular client for production |
+| npm start | Start the API in production mode |
+| npm run seed | Seed the database with example data |
+| npm run seed:destroy | Remove seeded data |
+| npm run lint | Lint the backend code |
+| npm test | Run the backend test suite |
 
-Any workspace script can also be run directly, e.g.
-`npm run test:coverage --workspace server`.
-
-## Docker
-
-Bring up the API + MongoDB together:
+You can also target a workspace directly, for example:
 
 ```bash
-# provide a JWT secret via env or a .env next to docker-compose.yml
-docker compose up --build
-```
-
-The `api` service builds from `./server`; MongoDB data and uploaded images persist in
-named volumes. The Angular client is not containerized (run it with `npm run dev:client`
-or serve the `npm run build` output from any static host).
-
-## Documentation
-
-- Backend API reference: [`server/docs/API.md`](server/docs/API.md)
-- Backend architecture & conventions: [`CLAUDE.md`](CLAUDE.md)
-- Hardening/refactor history: [`PROGRESS.md`](PROGRESS.md)
-- Frontend details: [`client/README.md`](client/README.md)
-
-## Testing
-
-The backend suite is hermetic — `mongodb-memory-server` starts an in-memory MongoDB, so
-no external database or `DB_URI` is required:
-
-```bash
-npm test                              # from the root
 npm run test:coverage --workspace server
 ```
 
+## API Overview
+
+The API is mounted under /api/v1 and supports:
+
+- Authentication: signup, login, password reset, and verification
+- Users: profile management and admin user operations
+- Categories and subcategories: CRUD support with nested routes
+- Brands and products: CRUD with image uploads
+- Pagination, filtering, sorting, and search on list endpoints
+
+For the detailed contract, see [server/docs/API.md](server/docs/API.md).
+
+## Docker
+
+A ready-made Docker setup is available for the API and MongoDB:
+
+```bash
+docker compose up --build
+```
+
+This uses the server container plus a MongoDB service and preserves uploaded files and database data via named volumes.
+
+## Testing
+
+The backend test suite uses Jest and mongodb-memory-server, so it can run without a live external database.
+
+```bash
+npm test
+npm run test:coverage --workspace server
+```
+
+## Documentation
+
+- API reference: [server/docs/API.md](server/docs/API.md)
+- Backend architecture notes: [CLAUDE.md](CLAUDE.md)
+- Project progress and hardening notes: [PROGRESS.md](PROGRESS.md)
+- Frontend specifics: [client/README.md](client/README.md)
+
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
