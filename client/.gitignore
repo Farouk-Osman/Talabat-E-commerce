@@ -1,0 +1,16 @@
+# Angular / build output
+/dist
+/tmp
+/out-tsc
+/.angular/cache
+
+# Dependencies
+/node_modules
+
+# IDE
+/.idea
+/.vscode
+
+# Misc
+/.sass-cache
+*.log
