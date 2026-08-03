@@ -1,250 +1,150 @@
-# NodeJS Talabat API v1
+# Talabat E-Commerce Monorepo
 
-A RESTful API built with Node.js to interact with Talabat’s integration infrastructure (orders, menus, vendor management).  
-This project serves as a bridge between a local POS or vendor platform and Talabat’s backend, enabling programmatic management of orders, catalog, store status, etc.
+A polished full-stack e-commerce starter built as a Node.js + Express API and Angular frontend, managed as a npm workspaces monorepo.
 
----
+> This project is a generic e-commerce application with categories, subcategories, brands, products, users, and JWT-based authentication. The Talabat name is historical branding rather than a real integration.
 
-## Table of Contents
+## Highlights
 
-- [Features](#features)  
-- [Architecture & Structure](#architecture--structure)  
-- [Prerequisites](#prerequisites)  
-- [Installation & Setup](#installation--setup)  
-- [Configuration](#configuration)  
-- [Usage / Endpoints](#usage--endpoints)  
-- [Middleware & Utilities](#middleware--utilities)  
-- [Error Handling & Logging](#error-handling--logging)  
-- [Security Considerations](#security-considerations)  
-- [Testing](#testing)  
-- [Contribution](#contribution)  
-- [License](#license)  
-- [Acknowledgements / References](#acknowledgements--references)
+- REST API backend in Express 5 with Mongoose and MongoDB
+- Angular 18 single-page application for browsing and admin-style management
+- JWT authentication, role-based access control, and rate limiting
+- Product and user image uploads with resizing and storage handling
+- Structured validation, centralized error handling, and test coverage
+- Docker-ready local development stack
 
----
+## Tech Stack
 
-## Features
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js |
+| Backend | Express 5, Mongoose, JWT, multer, sharp |
+| Frontend | Angular 18, TypeScript, RxJS |
+| Database | MongoDB |
+| Testing | Jest, Supertest, mongodb-memory-server |
+| Dev Ops | Docker Compose, npm workspaces |
 
-- Vendor authentication & access token issuance  
-- CRUD operations for menus / catalog  
-- Webhooks support (e.g. incoming orders, order status updates)  
-- Order management: accept, reject, update status  
-- Vendor availability toggling  
-- Data validation via middlewares  
-- Utility helpers (e.g. date handling, request formatting)  
-- Error-handling middleware  
-- Logging support  
-- Modular folder structure (routes, services, models, middlewares, utils, config)  
+## Project Structure
 
----
-
-## Architecture & Structure
-
-Here is a high-level view of how the project is organized:
-
-```
+```text
 .
-├── server.js                # Entry point / bootstrap
-├── config/                  # Configuration files (e.g. environment, constants)
-├── routes/                  # Express route definitions
-├── controllers / services   # Business logic handlers
-├── models/                  # Data models / schemas (e.g. for persistence or DTOs)
-├── middlewares/             # Express middlewares (auth, validation, error handling)
-├── utils/                   # Helper utilities (date, formatting, etc.)
-├── .eslintrc, .prettierrc    # Linting / formatting rules
-└── package.json             # Project metadata & dependencies
+├── package.json              # Root workspace scripts and shared tooling
+├── docker-compose.yml       # API + MongoDB container setup
+├── server/                   # Backend application
+│   ├── app.js                # App bootstrap
+│   ├── server.js             # Server entrypoint
+│   ├── config/               # DB and env configuration
+│   ├── routes/               # API routes
+│   ├── services/             # Business logic and CRUD helpers
+│   ├── models/               # Mongoose schemas
+│   ├── middlewares/          # Auth, validation, error handling
+│   ├── utils/                # Validators, upload helpers, API helpers
+│   └── tests/                # Backend test suite
+└── client/                   # Angular frontend
+    └── src/                  # Components, services, routes, and styles
 ```
-
-- **server.js**: Boots the Express application, connects necessary middleware, sets routes, and starts the HTTP server.  
-- **routes**: Declares endpoints and associates them with controllers.  
-- **services / controllers**: Encapsulate business logic, isolate route handlers from domain logic.  
-- **models**: Represent data structures (either DB schemas or DTO definitions).  
-- **middlewares**: Reusable logic such as authentication, request validation, error capturing, etc.  
-- **utils**: Common helpers (e.g. formatting dates, constructing responses).  
-- **config**: Stores environment-based settings (API keys, base URLs, timeouts, etc.)
-
-This modular structure ensures concerns are separated, making the codebase easier to maintain, extend, and test.
-
----
 
 ## Prerequisites
 
-Before running this project, ensure you have:
+Make sure you have:
 
-- **Node.js** (recommended version: v14.x, v16.x, or newer)  
-- **npm** (or Yarn)  
-- Access credentials / integration keys from Talabat’s system (if required)  
-- A development environment for local testing (you may use tools like `nodemon`)  
-- HTTPS / SSL support if needed (some endpoints / webhooks may require secure endpoints)  
+- Node.js 20+ and npm 8+
+- MongoDB running locally, or Docker available for the included Compose setup
 
----
+## Quick Start
 
-## Installation & Setup
+1. Install dependencies from the repository root:
 
-1. Clone the repository:
+```bash
+npm install
+```
 
-   ```bash
-   git clone https://github.com/Farouk-Osman/NodeJS-Talabat-api-v1.git
-   cd NodeJS-Talabat-api-v1
-   ```
+2. Create the backend environment file:
 
-2. Install dependencies:
+```bash
+cp server/.env.example server/.env
+```
 
-   ```bash
-   npm install
-   ```
+3. Update the values in server/.env, especially:
 
-3. Create your environment configuration file. You may use `.env` or `config/default.js` (depending on implementation). Example variables:
+```env
+DB_URI=mongodb://127.0.0.1:27017/talabat
+JWT_SECRET=your_super_secret_key
+PORT=3000
+NODE_ENV=development
+```
 
-   ```
-   PORT=3000
-   TALABAT_API_BASE_URL=https://integration.talabat.com
-   CLIENT_ID=your_client_id
-   CLIENT_SECRET=your_secret
-   WEBHOOK_SECRET=your_webhook_secret
-   LOG_LEVEL=info
-   ```
+4. Start the full stack:
 
-4. Run the project:
+```bash
+npm run dev
+```
 
-   ```bash
-   npm start
-   ```
+This starts:
 
-   During development, you may prefer:
+- API on http://localhost:3000
+- Angular app on http://localhost:4200
 
-   ```bash
-   npm run dev
-   ```
+The frontend is configured to call the API at http://localhost:3000/api/v1.
 
-5. The API should now be listening on `http://localhost:<PORT>` (e.g. `http://localhost:3000`).
+## Useful Commands
 
----
-
-## Configuration
-
-The project expects configuration values to drive behavior. Typical configuration may include:
-
-| Key | Purpose |
+| Command | Purpose |
 |---|---|
-| `PORT` | HTTP port number |
-| `TALABAT_API_BASE_URL` | Base URL for Talabat’s integration middleware |
-| `CLIENT_ID`, `CLIENT_SECRET` | Credentials for authentication / token issuance |
-| `WEBHOOK_SECRET` | Secret token / HMAC key to validate incoming webhook requests |
-| `LOG_LEVEL` | Logging granularity (e.g. info, debug, warn, error) |
-| `REQUEST_TIMEOUT` | Timeout for outbound HTTP requests |
-| Any other keys for third‑party integrations (if used) |
+| npm run dev | Launch both backend and frontend together |
+| npm run dev:server | Run only the API in development mode |
+| npm run dev:client | Run only the Angular client |
+| npm run build | Build the Angular client for production |
+| npm start | Start the API in production mode |
+| npm run seed | Seed the database with example data |
+| npm run seed:destroy | Remove seeded data |
+| npm run lint | Lint the backend code |
+| npm test | Run the backend test suite |
 
-Make sure your `.gitignore` excludes any config files that include secrets.
+You can also target a workspace directly, for example:
 
----
+```bash
+npm run test:coverage --workspace server
+```
 
-## Usage / Endpoints
+## API Overview
 
-Below is a sample list of endpoints you might expect; adapt it to your implementation.
+The API is mounted under /api/v1 and supports:
 
-### Authentication & Token
+- Authentication: signup, login, password reset, and verification
+- Users: profile management and admin user operations
+- Categories and subcategories: CRUD support with nested routes
+- Brands and products: CRUD with image uploads
+- Pagination, filtering, sorting, and search on list endpoints
 
-- `POST /auth/token` — Exchange client credentials or login payload for an access token  
-- `GET /auth/refresh` — Refresh token (if supported)
+For the detailed contract, see [server/docs/API.md](server/docs/API.md).
 
-### Vendor / Store
+## Docker
 
-- `GET /vendor/:vendorId` — Retrieve vendor profile  
-- `POST /vendor/:vendorId/availability` — Set store as open/closed  
+A ready-made Docker setup is available for the API and MongoDB:
 
-### Catalog / Menu
+```bash
+docker compose up --build
+```
 
-- `GET /vendor/:vendorId/menu` — Fetch current menu  
-- `PUT /vendor/:vendorId/menu` — Submit or update menu (items, categories)  
-- `PATCH /vendor/:vendorId/menu/items/:itemId/availability` — Toggle availability of a menu item  
-
-### Order Webhooks
-
-These are endpoints Talabat may call to notify your system of order events:
-
-- `POST /webhook/order-dispatch` — New incoming order  
-- `POST /webhook/order-updated` — Order status changed or canceled  
-
-### Order Management (Outgoing / Confirmations)
-
-- `POST /vendor/:vendorId/order/:orderId/accept` — Accept an order  
-- `POST /vendor/:vendorId/order/:orderId/reject` — Reject an order (with reason)  
-- `POST /vendor/:vendorId/order/:orderId/status` — Update status (e.g. “ready”, “picked up”)
-
----
-
-## Middleware & Utilities
-
-- **Request Validation**: Validate request bodies & parameters (e.g., via `Joi`, `express-validator`, or custom validator).  
-- **Authentication Middleware**: Ensure incoming requests have valid tokens or client credentials.  
-- **Webhook Signature Validation**: For security, verify webhook origin via signature / secret.  
-- **Error Middleware**: Centralized error handler to respond with friendly error format (code, message)  
-- **Logging Utility**: Log request / response details, errors, etc.  
-- **Helpers / Utils**: Formatting timestamps, response wrapping (e.g. `{ data: ..., error: null }`), retry logic, etc.
-
----
-
-## Error Handling & Logging
-
-- All uncaught errors should be handled by a centralized middleware that returns a JSON error response.  
-- Errors should include an error code, message, and optionally details (in development only).  
-- Logging should capture at least: request path, params, method, error stack, timestamps.  
-- Use log levels (info, warn, error) appropriately.
-
----
-
-## Security Considerations
-
-- Never expose secrets, client credentials, or private keys.  
-- Use HTTPS / SSL for all webhook and client communication.  
-- Validate payload signatures (if Talabat supports that) to avoid spoofed webhooks.  
-- Rate-limit incoming requests (e.g. via `express-rate-limit`) to prevent abuse.  
-- Sanitize and validate all user input / path parameters.  
-- Use secure headers (e.g. via `helmet`) and CORS policies if needed.
-
----
+This uses the server container plus a MongoDB service and preserves uploaded files and database data via named volumes.
 
 ## Testing
 
-- Write **unit tests** for individual service / utility modules (e.g. using Mocha, Jest).  
-- Write **integration / end-to-end tests** to simulate real HTTP requests (e.g. via Supertest).  
-- Optionally, mock external calls to Talabat APIs to test your routes without dependency.  
-- Include test scripts in `package.json`, e.g.:
+The backend test suite uses Jest and mongodb-memory-server, so it can run without a live external database.
 
-  ```json
-  "scripts": {
-    "test": "jest --coverage",
-    "test:watch": "jest --watch"
-  }
-  ```
+```bash
+npm test
+npm run test:coverage --workspace server
+```
 
-- Aim for good code coverage, especially around error paths and edge cases.
+## Documentation
 
----
-
-## Contribution
-
-Contributions, bug reports, and pull requests are welcome! Here’s a suggested workflow:
-
-1. Fork the repository  
-2. Create a feature branch: `git checkout -b feature/awesome-feature`  
-3. Write code (with tests)  
-4. Ensure all tests pass and code style is consistent  
-5. Submit a Pull Request explaining your changes  
-
-Please follow the existing code style, naming conventions, and document newly added endpoints.
-
----
+- API reference: [server/docs/API.md](server/docs/API.md)
+- Backend architecture notes: [CLAUDE.md](CLAUDE.md)
+- Project progress and hardening notes: [PROGRESS.md](PROGRESS.md)
+- Frontend specifics: [client/README.md](client/README.md)
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
-
----
-
-## Acknowledgements / References
-
-- Talabat / Delivery Hero Integration API documentation: managing menus, orders, stores, webhooks.  
-- Node.js / Express best practices  
-- Community resources on building REST APIs
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

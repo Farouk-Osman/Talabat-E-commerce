@@ -1,0 +1,38 @@
+# Local dev/prod stack: API + MongoDB.
+# Usage: docker compose up --build
+# Provide JWT_SECRET via a .env file next to this compose file or your shell.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./server
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_URI: mongodb://mongo:27017/talabat
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: 7d
+      UPLOAD_STORAGE: disk
+    volumes:
+      - uploads:/usr/src/app/uploads
+
+volumes:
+  mongo-data:
+  uploads:
