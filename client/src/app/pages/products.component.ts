@@ -14,17 +14,20 @@ import { apiError } from './shared/errors';
   imports: [FormsModule, RouterLink, CurrencyPipe, SpinnerComponent, EmptyStateComponent, ErrorAlertComponent, PaginationComponent],
   template: `
     <section class="hero">
-      <p class="eyebrow">Shop talabat</p>
-      <h1>Everything you need, delivered fast.</h1>
-      <p>Browse the full catalog by category, brand, or price. Thousands of products, one quick checkout.</p>
-      <form class="row hero-search" (ngSubmit)="search()">
-        <input class="input" placeholder="Search products…" [(ngModel)]="keyword" name="keyword" aria-label="Search products" />
-        <button class="btn" type="submit">Search</button>
-      </form>
+      <div class="container hero-inner">
+        <p class="eyebrow">Shop talabat</p>
+        <h1>Everything you need, delivered fast.</h1>
+        <p>Browse the full catalog by category, brand, or price. Thousands of products, one quick checkout.</p>
+        <form class="hero-search" (ngSubmit)="search()">
+          <input class="input" placeholder="Search products…" [(ngModel)]="keyword" name="keyword" aria-label="Search products" />
+          <button class="btn" type="submit">Search</button>
+        </form>
+      </div>
     </section>
 
-    <div class="shop">
-      <aside class="filters">
+    <div class="container">
+      <div class="shop">
+        <aside class="filters">
         <div class="filter-group">
           <h4>Category</h4>
           <div class="stack" style="gap:.4rem">
@@ -70,9 +73,9 @@ import { apiError } from './shared/errors';
         }
       </aside>
 
-      <div>
-        <app-error [message]="error()" />
-        @if (loading()) {
+        <div class="shop-main">
+          <app-error [message]="error()" />
+          @if (loading()) {
           <app-spinner />
         } @else if (products().length === 0) {
           <app-empty mark="◇" title="No products found" message="Try a different search or clear the filters." />
@@ -119,6 +122,7 @@ import { apiError } from './shared/errors';
           </div>
           <app-pagination [current]="q.page || 1" [totalPages]="totalPages()" (pageChange)="goPage($event)" />
         }
+        </div>
       </div>
     </div>
   `,
