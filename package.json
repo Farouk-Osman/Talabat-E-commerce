@@ -1,8 +1,8 @@
 {
-  "name": "talabat-monorepo",
+  "name": "talabat-e-commerce",
   "version": "1.0.0",
   "private": true,
-  "description": "Full-stack MEAN e-commerce app: Express API (server/) + Angular SPA (client/).",
+  "description": "Talabat E-Commerce full-stack app: Express API (server/) + Angular SPA (client/).",
   "license": "MIT",
   "workspaces": [
     "server",
