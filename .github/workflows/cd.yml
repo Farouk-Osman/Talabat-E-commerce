@@ -43,3 +43,34 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/talabat
+
+            echo "Pulling latest image..."
+            docker compose pull api
+
+            echo "Restarting API..."
+            docker compose up -d
+
+            echo "Waiting for API..."
+            sleep 5
+
+            echo "Checking health..."
+            curl --fail http://localhost:3000/health
+
+            echo "Cleaning old images..."
+            docker image prune -f
+
+            echo "Deployment successful!"
