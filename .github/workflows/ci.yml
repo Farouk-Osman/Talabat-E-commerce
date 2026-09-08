@@ -14,7 +14,8 @@ jobs:
         node-version: [20.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -28,10 +29,40 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Tests are hermetic: mongodb-memory-server spins up its own MongoDB,
-      # so no service container is required. env.setup.js provides test secrets.
       - name: Test
         run: npm test
 
       - name: Build client
         run: npm run build
+
+      - name: Build Docker image
+        run: docker build -t talabat-api -f server/Dockerfile .
+
+      - name: Start Docker Compose
+        run: docker compose up -d --build
+
+      - name: Check Docker services
+        run: docker compose ps
+
+      - name: Wait for API health
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://localhost:3000/health > /dev/null; then
+              echo "API is healthy"
+              exit 0
+            fi
+
+            echo "Waiting for API..."
+            sleep 2
+          done
+
+          echo "API failed health check"
+          docker compose logs
+          exit 1
+
+      - name: Smoke test API
+        run: curl --fail http://localhost:3000/api/v1/categories
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker compose down -v

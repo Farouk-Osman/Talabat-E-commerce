@@ -1,18 +1,18 @@
-# Multi-stage-friendly single stage image for the Express API.
 FROM node:20-alpine
 
-# sharp needs these on some alpine setups; keep the image lean otherwise.
 WORKDIR /usr/src/app
 
-# Install deps first for better layer caching.
+# Copy root workspace manifests
 COPY package*.json ./
-RUN npm ci --omit=dev
+COPY server/package.json ./server/package.json
+COPY client/package.json ./client/package.json
 
-# App source
-COPY . .
+# Install production dependencies for the server workspace
+RUN npm ci --omit=dev --workspace server
 
-ENV NODE_ENV=production
-EXPOSE 3000
+# Copy server source
+COPY server ./server
 
-# Runtime config (DB_URI, JWT_SECRET, ...) is injected via env/compose.
+WORKDIR /usr/src/app/server
+
 CMD ["node", "server.js"]

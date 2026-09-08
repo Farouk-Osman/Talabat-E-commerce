@@ -3,7 +3,7 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-
+const mongoose = require('mongoose');
 const config = require('./config/env');
 const ApiError = require('./utils/apiError');
 const globalErrorHandler = require('./middlewares/errorMiddleware');
@@ -72,6 +72,26 @@ app.use('/api/v1/brands', brandRoute);
 app.use('/api/v1/products', productRoute);
 app.use('/api/v1/users', userRoute);
 app.use('/api/v1/auth', authLimiter, authRoute);
+// Health check
+app.get('/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+
+  const dbStatus = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+
+  const isHealthy = dbState === 1;
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'unhealthy',
+    service: 'talabat-api',
+    database: dbStatus[dbState] || 'unknown',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 // Unhandled routes
 app.use((req, res, next) => {

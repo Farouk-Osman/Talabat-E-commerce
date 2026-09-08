@@ -1,0 +1,32 @@
+$kind: http-request
+name: Create Product
+method: POST
+url: '{{baseUrl}}/api/v1/products'
+order: 3000
+body:
+  type: formdata
+  content:
+    - key: title
+      type: text
+      value: 'Sample Product'
+    - key: description
+      type: text
+      value: 'A sample product description'
+    - key: price
+      type: text
+      value: '99.99'
+    - key: quantity
+      type: text
+      value: '100'
+    - key: category
+      type: text
+      value: '{{categoryId}}'
+    - key: brand
+      type: text
+      value: '{{brandId}}'
+    - key: imageCover
+      type: file
+      src: ''
+    - key: images
+      type: file
+      src: ''

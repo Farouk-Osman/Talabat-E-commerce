@@ -1,0 +1,14 @@
+$kind: http-request
+name: Create Brand
+method: POST
+url: '{{baseUrl}}/api/v1/brands'
+order: 3000
+body:
+  type: formdata
+  content:
+    - key: name
+      type: text
+      value: Samsung
+    - key: image
+      type: file
+      src: ''

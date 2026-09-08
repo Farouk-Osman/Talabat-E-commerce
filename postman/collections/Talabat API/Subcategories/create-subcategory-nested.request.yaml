@@ -1,0 +1,14 @@
+$kind: http-request
+name: 'Create Subcategory (Nested)'
+method: POST
+url: '{{baseUrl}}/api/v1/categories/{{categoryId}}/subcategories'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Smartphones"
+    }

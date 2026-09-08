@@ -1,0 +1,12 @@
+$kind: http-request
+name: Get All Users
+method: GET
+url: '{{baseUrl}}/api/v1/users'
+order: 1000
+queryParams:
+  - key: page
+    value: '1'
+    disabled: true
+  - key: limit
+    value: '10'
+    disabled: true

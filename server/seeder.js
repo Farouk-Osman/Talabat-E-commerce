@@ -226,8 +226,7 @@ async function importData() {
   console.log('✅ 3 users (1 admin, 2 customers)');
   console.log('   admin login: admin@talabat.local');
   console.log(
-    '   admin password: set via SEED_ADMIN_PASSWORD env var' +
-      (process.env.SEED_ADMIN_PASSWORD ? '' : ' (using dev default — change it!)')
+    `   admin password: set via SEED_ADMIN_PASSWORD env var${process.env.SEED_ADMIN_PASSWORD ? '' : ' (using dev default — change it!)'}`
   );
 }
 

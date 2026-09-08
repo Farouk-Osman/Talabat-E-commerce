@@ -1,0 +1,5 @@
+$kind: http-request
+name: Delete Brand
+method: DELETE
+url: '{{baseUrl}}/api/v1/brands/{{brandId}}'
+order: 5000

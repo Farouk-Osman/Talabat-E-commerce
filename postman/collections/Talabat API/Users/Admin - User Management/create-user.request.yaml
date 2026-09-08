@@ -1,0 +1,26 @@
+$kind: http-request
+name: Create User
+method: POST
+url: '{{baseUrl}}/api/v1/users'
+order: 3000
+body:
+  type: formdata
+  content:
+    - key: name
+      type: text
+      value: 'John Doe'
+    - key: email
+      type: text
+      value: 'john@example.com'
+    - key: password
+      type: text
+      value: 'password123'
+    - key: phone
+      type: text
+      value: '+1234567890'
+    - key: role
+      type: text
+      value: 'user'
+    - key: profileImage
+      type: file
+      src: ''
