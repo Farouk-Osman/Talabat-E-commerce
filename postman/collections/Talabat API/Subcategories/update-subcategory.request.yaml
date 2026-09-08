@@ -1,0 +1,14 @@
+$kind: http-request
+name: Update Subcategory
+method: PUT
+url: '{{baseUrl}}/api/v1/subcategories/{{subcategoryId}}'
+order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Smartphones"
+    }

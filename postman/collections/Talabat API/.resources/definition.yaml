@@ -1,0 +1,22 @@
+$kind: collection
+name: Talabat API
+variables:
+  - key: baseUrl
+    value: 'http://localhost:3000'
+  - key: authToken
+    value: ''
+  - key: categoryId
+    value: ''
+  - key: subcategoryId
+    value: ''
+  - key: brandId
+    value: ''
+  - key: productId
+    value: ''
+  - key: userId
+    value: ''
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{authToken}}'

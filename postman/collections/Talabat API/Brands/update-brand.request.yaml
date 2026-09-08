@@ -1,0 +1,14 @@
+$kind: http-request
+name: Update Brand
+method: PUT
+url: '{{baseUrl}}/api/v1/brands/{{brandId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Updated Brand"
+    }

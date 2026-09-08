@@ -1,0 +1,7 @@
+$kind: http-request
+name: Get Brand
+method: GET
+url: '{{baseUrl}}/api/v1/brands/{{brandId}}'
+order: 2000
+auth:
+  type: noauth

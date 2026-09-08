@@ -1,0 +1,7 @@
+$kind: http-request
+name: Get Subcategory
+method: GET
+url: '{{baseUrl}}/api/v1/subcategories/{{subcategoryId}}'
+order: 2000
+auth:
+  type: noauth

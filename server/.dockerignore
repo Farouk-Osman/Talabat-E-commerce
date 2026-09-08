@@ -4,10 +4,8 @@ npm-debug.log
 .git
 .gitignore
 coverage
-client
 tests
 *.md
-Dockerfile
-.dockerignore
-docker-compose.yml
 uploads
+client/*
+!client/package.json

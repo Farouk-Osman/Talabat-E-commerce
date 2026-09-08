@@ -1,0 +1,20 @@
+$kind: http-request
+name: Get All Products
+method: GET
+url: '{{baseUrl}}/api/v1/products'
+order: 1000
+queryParams:
+  - key: page
+    value: '1'
+    disabled: true
+  - key: limit
+    value: '10'
+    disabled: true
+  - key: sort
+    value: '-createdAt'
+    disabled: true
+  - key: fields
+    value: 'title,price'
+    disabled: true
+auth:
+  type: noauth
